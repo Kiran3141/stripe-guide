@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Subscription Setup Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            min-height: 80vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 0;
+            color: white;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            padding: 20px 20px 30px 20px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            font-size: 18px;
+        }
+
+        .nav-tabs {
+            list-style: none;
+        }
+
+        .nav-tabs li {
+            margin: 0;
+        }
+
+        .nav-tabs a {
+            display: block;
+            padding: 15px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-tabs a:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left-color: #fff;
+        }
+
+        .nav-tabs a.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-left-color: #fff;
+        }
+
+        .content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 24px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        h4 {
+            color: #666;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        ol, ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #856404;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #0c5460;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #155724;
+        }
+
+        .image-container {
+            margin: 25px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: block;
+            margin: 10px 0;
+        }
+
+        .image-caption {
+            color: #666;
+            font-size: 13px;
+            font-style: italic;
+            margin-top: 8px;
+            padding: 0 10px;
+        }
+
+        .phase-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .phase1 {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .phase2 {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .phase3 {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 15px 0;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>📋 Navigation</h2>
+            <ul class="nav-tabs">
+                <li><a onclick="showTab('overview', event)" class="nav-link active">Overview</a></li>
+                <li><a onclick="showTab('phase1', event)" class="nav-link">Phase 1: Create Customer</a></li>
+                <li><a onclick="showTab('phase2', event)" class="nav-link">Phase 2: Add Payment</a></li>
+                <li><a onclick="showTab('phase3', event)" class="nav-link">Phase 3: Create Subscription</a></li>
+                <li><a onclick="showTab('troubleshooting', event)" class="nav-link">Troubleshooting</a></li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <!-- OVERVIEW TAB -->
+            <div id="overview" class="tab-content active">
+                <h1>🔐 Stripe Subscription Setup Guide</h1>
+                <p class="subtitle">Convert Guest Users to Recurring Subscription Customers</p>
+
+                <div class="info">
+                    <strong>⚠️ Important:</strong> If you have an Analyst role, you won't be able to add payment methods or create subscriptions. You'll need Billing or Administrator role permissions.
+                </div>
+
+                <h2>Quick Summary</h2>
+                <p>This guide walks you through setting up recurring subscriptions for customers who made one-time payments via Stripe Payment Links:</p>
+
+                <ol>
+                    <li><strong>Create/Locate Customer Record</strong> - Find or create the customer in Stripe Dashboard</li>
+                    <li><strong>Add Payment Method</strong> - Get payment details using Portal (recommended) or manual addition</li>
+                    <li><strong>Create Subscription</strong> - Set up the recurring billing cycle</li>
+                </ol>
+
+                <h3>Three Phases Covered:</h3>
+                <ul>
+                    <li><span class="phase-badge phase1">Phase 1</span> Create or Locate the Customer Record</li>
+                    <li><span class="phase-badge phase2">Phase 2</span> Add or Update Payment Method</li>
+                    <li><span class="phase-badge phase3">Phase 3</span> Create the Subscription</li>
+                </ul>
+
+                <h3>What You'll Learn:</h3>
+                <ul>
+                    <li>How to search for and create customer records in Stripe</li>
+                    <li>Three different methods to add payment methods (manual, portal, technical)</li>
+                    <li>Step-by-step subscription creation with real dashboard screenshots</li>
+                    <li>Solutions to common issues and problems</li>
+                </ul>
+
+                <p style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; color: #999; font-size: 12px;">
+                    Document Version: 1.0 | Last Updated: November 1, 2025 | Prepared for: Physics Wallah
+                </p>
+            </div>
+
+            <!-- PHASE 1 TAB -->
+            <div id="phase1" class="tab-content">
+                <span class="phase-badge phase1">Phase 1</span>
+                <h1>Create or Locate the Customer Record</h1>
+                <p class="subtitle">Find or create a proper customer in your Stripe Dashboard</p>
+
+                <div class="section">
+                    <h2>Why This Step Matters</h2>
+                    <p>When a customer pays through a Payment Link as a guest, they don't automatically become a full customer in Stripe. We need to create or locate a customer record to manage their subscription and payment methods.</p>
+                </div>
+
+                <div class="section">
+                    <h2>Step-by-Step Instructions</h2>
+                    <ol>
+                        <li><strong>Log in</strong> to your Stripe Dashboard</li>
+                        <li><strong>Navigate</strong> to <code>Customers</code> from the left-hand menu</li>
+                        <li><strong>Search</strong> for the guest user by the email address they used during their initial payment</li>
+                        <li><strong>If found:</strong> Open their profile page and proceed to Phase 2</li>
+                        <li><strong>If not found:</strong> Click <code>+ Add customer</code> to create a new customer record</li>
+                    </ol>
+
+                    <div class="warning">
+                        <strong>Note:</strong> Always use the same email address. The portal login won't match if emails don't align.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Screenshot: Customer Creation</h2>
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.04.35-PM.jpg" alt="Creating a new customer in Stripe Dashboard">
+                        <p class="image-caption">Figure 1: Creating a new customer in Stripe Dashboard - Click "+ Add customer" button</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Screenshot: Customer Profile</h2>
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.06.03-PM.jpg" alt="Customer profile page">
+                        <p class="image-caption">Figure 2: Customer profile page showing subscriptions and payment information</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Why Payment Cards May Not Appear</h2>
+                    <ul>
+                        <li>The payment was made as a "guest" without saving the payment method</li>
+                        <li>The payment was for a different product in your account</li>
+                        <li>The payment link wasn't configured to save payment methods</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>Solution:</strong> Move to Phase 2 to add a payment method using the Customer Portal (recommended).</p>
+                </div>
+            </div>
+
+            <!-- PHASE 2 TAB -->
+            <div id="phase2" class="tab-content">
+                <span class="phase-badge phase2">Phase 2</span>
+                <h1>Add or Update Payment Method</h1>
+                <p class="subtitle">Three options to securely collect payment details</p>
+
+                <div class="section">
+                    <h2>Three Options Available</h2>
+                    <p>Choose the option that best fits your needs:</p>
+                </div>
+
+                <div class="section">
+                    <h3>Option A: Manual Addition (Requires Permissions)</h3>
+                    <div class="info">
+                        <strong>Requirements:</strong> You need Billing or Administrator role (Analyst role cannot perform this)
+                    </div>
+
+                    <h4>Steps:</h4>
+                    <ol>
+                        <li>On the customer's detail page, scroll to <strong>Payment methods</strong> section</li>
+                        <li>Check if the card from the initial payment is listed</li>
+                        <li>If missing, click to add a new payment method</li>
+                        <li>Set one payment method as <strong>Default</strong> for recurring billing</li>
+                    </ol>
+
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.13.39-PM.jpg" alt="Payment methods section">
+                        <p class="image-caption">Figure 3: Payment methods section on customer profile</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>✅ Option B: Customer Portal (RECOMMENDED - No-Code)</h3>
+                    <div class="success">
+                        <strong>✓ Recommended:</strong> This is the easiest way to get payment details without requiring special permissions or coding
+                    </div>
+
+                    <h4>Why Choose This Option?</h4>
+                    <ul>
+                        <li>No special permissions required (works with Analyst role)</li>
+                        <li>Secure - customers enter their own payment details</li>
+                        <li>PCI compliant - Stripe handles all security</li>
+                        <li>Customers have full control over their payment methods</li>
+                    </ul>
+
+                    <h4>Steps:</h4>
+                    <ol>
+                        <li>Navigate to <strong>Settings → Customer portal</strong> in Stripe Dashboard</li>
+                        <li>Configure portal options to enable payment method updates</li>
+                        <li>Click <strong>Activate link</strong> if not already active</li>
+                        <li>Copy the portal link</li>
+                        <li>Send the link to the customer via email</li>
+                        <li>Customer logs in with their email and adds payment method</li>
+                    </ol>
+
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.12.22-PM.jpg" alt="Portal settings">
+                        <p class="image-caption">Figure 4: Customer Portal settings page - Configure what customers can do</p>
+                    </div>
+
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.12.37-PM.jpg" alt="Portal link">
+                        <p class="image-caption">Figure 5: Active portal link ready to share with customers</p>
+                    </div>
+
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.12.40-PM.jpg" alt="Portal login">
+                        <p class="image-caption">Figure 6: Customer portal login page - Customer enters email</p>
+                    </div>
+
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.12.49-PM.jpg" alt="Add payment">
+                        <p class="image-caption">Figure 7: Customer adding payment method in the portal securely</p>
+                    </div>
+
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.13.48-PM.jpg" alt="Billing info">
+                        <p class="image-caption">Figure 8: Customer portal showing billing information and payment methods</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Option C: Technical Implementation (Setup Intent)</h3>
+                    <p>For developers who want programmatic control:</p>
+                    <ul>
+                        <li>Requires backend and frontend code integration</li>
+                        <li>Uses Stripe.js to securely collect card details</li>
+                        <li>Authenticates and saves payment method for future use</li>
+                        <li>Meets PCI compliance standards automatically</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: #999; font-size: 13px;"><em>Note: This option requires technical resources and is beyond the scope of this guide.</em></p>
+                </div>
+            </div>
+
+            <!-- PHASE 3 TAB -->
+            <div id="phase3" class="tab-content">
+                <span class="phase-badge phase3">Phase 3</span>
+                <h1>Create the Subscription</h1>
+                <p class="subtitle">Set up recurring billing for the customer</p>
+
+                <div class="section">
+                    <h2>Overview</h2>
+                    <p>Once the payment method is attached to the customer, you can now create the subscription. Stripe will automatically charge the payment method on the billing cycle you specify.</p>
+                </div>
+
+                <div class="section">
+                    <h2>Step-by-Step Instructions</h2>
+                    <ol>
+                        <li><strong>Find</strong> the <code>Subscriptions</code> section on the customer profile page</li>
+                        <li><strong>Click</strong> <code>+ Add subscription</code> or the <code>+</code> button</li>
+                        <li><strong>Select</strong> the desired Product/Plan for the subscription</li>
+                        <li><strong>Configure</strong> subscription settings (see details below)</li>
+                        <li><strong>Review</strong> Payment settings</li>
+                        <li><strong>Click</strong> <code>Start subscription</code> to activate the recurring billing cycle</li>
+                    </ol>
+
+                    <div class="success">
+                        <strong>Result:</strong> The user is now subscribed and will be billed according to the schedule you configured.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Screenshot: Create Subscription</h2>
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.15.21-PM.jpg" alt="Create subscription">
+                        <p class="image-caption">Figure 9: Create subscription page with product selection</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Screenshot: Configure Details</h2>
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.15.07-PM.jpg" alt="Subscription details">
+                        <p class="image-caption">Figure 10: Configuring subscription details and pricing information</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Configuration Options Explained</h2>
+                    <ul>
+                        <li><strong>Payment method:</strong> Confirm the correct payment method is selected</li>
+                        <li><strong>Subscription start date:</strong> Usually set to "Now" or a specific future date</li>
+                        <li><strong>Billing cycle:</strong> Monthly, yearly, or custom intervals</li>
+                        <li><strong>Trial periods:</strong> Add free trial days if applicable</li>
+                        <li><strong>Coupon codes:</strong> Apply promotional codes if needed</li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h2>Screenshot: Advanced Settings</h2>
+                    <div class="image-container">
+                        <img src="images/Screenshot-2025-11-01-at-8.03.02-PM.jpg" alt="Advanced settings">
+                        <p class="image-caption">Figure 11: Advanced subscription settings including payment options</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Payment Settings</h2>
+                    <p>Choose one of two payment options:</p>
+                    <ul>
+                        <li><strong>Automatically charge payment method on file:</strong> Stripe will charge the card automatically on the billing date</li>
+                        <li><strong>Email invoice to customer to pay manually:</strong> Customer receives an invoice and pays manually (with terms like 30 days to pay)</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>Recommendation:</strong> Use automatic charging for recurring subscriptions to ensure consistent revenue.</p>
+                </div>
+            </div>
+
+            <!-- TROUBLESHOOTING TAB -->
+            <div id="troubleshooting" class="tab-content">
+                <h1>🔧 Troubleshooting</h1>
+                <p class="subtitle">Common issues and their solutions</p>
+
+                <div class="section">
+                    <h2>Issue 1: Payment Method Not Showing</h2>
+                    <p><strong>Cause:</strong> Guest payment wasn't saved to customer profile</p>
+                    <p><strong>Solution:</strong> Use the Customer Portal link (Option B from Phase 2) to let the customer add their payment method themselves. This is the most reliable method.</p>
+                    <div class="info">
+                        Go to Settings → Customer portal, share the portal link with the customer, and they can securely add their payment method.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Issue 2: Cannot Add Payment Methods</h2>
+                    <p><strong>Cause:</strong> Insufficient permissions - you have an Analyst role</p>
+                    <p><strong>Solution:</strong> Request Billing or Admin role from your Stripe account administrator.</p>
+                    <div class="info">
+                        <strong>Alternative:</strong> Use the Customer Portal method (Option B) instead - it works with any role!
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Issue 3: Customer Has Multiple Profiles</h2>
+                    <p><strong>Cause:</strong> Different email addresses or duplicate customer creation</p>
+                    <p><strong>Solution:</strong> Search by email in Customers section. If you find duplicates, use the primary customer record and delete any duplicates.</p>
+                    <div class="warning">
+                        Always verify the email address matches exactly before creating a new customer.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Issue 4: Portal Link Not Working</h2>
+                    <p><strong>Cause:</strong> Portal not activated or customer email mismatch</p>
+                    <p><strong>Solution:</strong> </p>
+                    <ul>
+                        <li>Verify the portal is active in Settings → Customer portal</li>
+                        <li>Check that the customer email matches exactly</li>
+                        <li>Make sure the portal link hasn't expired (they're typically valid for 30 minutes)</li>
+                        <li>Generate a new portal link if needed</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName, event) {
+            event.preventDefault();
+
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all nav links
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => link.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked nav link
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
